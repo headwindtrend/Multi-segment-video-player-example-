@@ -2,8 +2,11 @@ javascript: (function() {
 
 const targetVideo = "https://www.youtube.com/watch?v=SUEzksc3CXA";
 const sampleSegmentsSpec = "1647-1700,12:34-13:00";
+const loopFlag = "1";
 
-const videoURL = targetVideo + "&segments=" + sampleSegmentsSpec;
+let videoURL = targetVideo + "&segments=" + sampleSegmentsSpec;
+if (typeof loopFlag !== "undefined" && loopFlag)
+  videoURL += "&loop=" + loopFlag;
 
 var onYouTubeIframeAPIReady = async function() {
   const videoURL = window.top.localStorage.getItem("vspb_thisURL");
@@ -28,6 +31,7 @@ var onYouTubeIframeAPIReady = async function() {
         });
         return { start, end };
       });
+      const loop = urlParams.get("loop");
       await new Promise(resolve => {
         new YT.Player("player", {
           videoId: ytvid, width: "100%", height: "100%",
@@ -43,9 +47,13 @@ var onYouTubeIframeAPIReady = async function() {
                   i++;
                   if (i < segments.length) {
                     v.currentTime = segments[i].start;
-                    v.play();
                   } else {
-                    v.pause();
+                    if (loop) {
+                      i = 0;
+                      v.currentTime = segments[i].start;
+                    } else {
+                      v.pause();
+                    }
                   }
                   v.dataset.currentIndex = i;
                 }
@@ -53,7 +61,6 @@ var onYouTubeIframeAPIReady = async function() {
               v.addEventListener("loadedmetadata", () => {
                 if (segments.length > 0) {
                   v.currentTime = segments[0].start;
-                  v.play();
                 }
               });
             },
